@@ -20,10 +20,15 @@ public class ClassicSceneManager : MonoBehaviour
 	protected int frameCounter = 0;
 	protected float deltaTimeCounter;
 
-	void Update()
+	protected virtual void Update()
 	{
 		if (Input.GetKeyUp(KeyCode.Space))
 			SpawnUnits(unitySpawnIncrement);
+		UpdateFPS();
+	}
+
+	protected virtual void UpdateFPS()
+	{
 		++frameCounter;
 		deltaTimeCounter += Time.deltaTime;
 		if (frameCounter % fpsFrameBuffer == 0)
@@ -34,7 +39,7 @@ public class ClassicSceneManager : MonoBehaviour
 		}
 	}
 
-	public void SpawnUnits(int amount)
+	protected virtual void SpawnUnits(int amount)
 	{
 		for (int i = 0; i < amount; ++i)
 		{
