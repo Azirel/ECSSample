@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Jobs;
@@ -9,6 +10,7 @@ public class JobsGameManager : ClassicSceneManager
 	TransformAccessArray transforms;
 	MovementJob jobsMovement;
 	JobHandle moveHandle;
+	NativeList<Vector3> targets;
 
 	[Range(0, 100)] public float speed = 13;
 
@@ -16,11 +18,22 @@ public class JobsGameManager : ClassicSceneManager
 	{
 		moveHandle.Complete();
 		transforms.Dispose();
+		targets.Dispose();
 	}
 
 	private void Start()
 	{
 		transforms = new TransformAccessArray(0, -1);
+		targets = new NativeList<Vector3>(0, Allocator.Persistent);
+		jobsMovement = new MovementJob()
+		{
+			heightBounds = heightBounds,
+			widthBounds = widthBounds,
+			speed = speed,
+			targetTreshold = 0.1f,
+			random = Random.Range(-100, 100),
+			targets = this.targets.ToDeferredJobArray()
+		};
 	}
 
 	protected override void Update()
@@ -28,17 +41,12 @@ public class JobsGameManager : ClassicSceneManager
 		moveHandle.Complete();
 
 		if (Input.GetKeyUp(KeyCode.Space))
-			SpawnUnits(unitySpawnIncrement);
-
-		jobsMovement = new MovementJob()
 		{
-			heightBounds = heightBounds,
-			widthBounds = widthBounds,
-			speed = speed,
-			targetTreshold = 0.1f,
-			deltaTime = Time.deltaTime,
-			random = Random.Range(-100, 100)
-		};
+			SpawnUnits(unitySpawnIncrement);
+		}
+
+		jobsMovement.deltaTime = Time.deltaTime;
+		jobsMovement.random = Random.Range(float.MinValue, float.MaxValue);
 
 		moveHandle = jobsMovement.Schedule(transforms);
 		JobHandle.ScheduleBatchedJobs();
@@ -57,11 +65,12 @@ public class JobsGameManager : ClassicSceneManager
 			Random.Range(widthBounds.x, widthBounds.y), 0,
 			Random.Range(heightBounds.x, heightBounds.y)),
 			Quaternion.identity);
-
 			transforms.Add(instance.transform);
+			targets.Add(Vector3.zero);
 		}
 		currentAmount += amount;
 		amountDisplayer.text = currentAmount.ToString();
+		jobsMovement.targets = targets.ToDeferredJobArray();
 	}
 
 	[ContextMenu("Test")]

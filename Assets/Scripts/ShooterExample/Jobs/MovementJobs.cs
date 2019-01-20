@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Jobs;
 using Unity.Jobs;
 using Unity.Burst;
+using Unity.Collections;
 
 [BurstCompile]
 public struct MovementJob : IJobParallelForTransform
@@ -14,14 +15,13 @@ public struct MovementJob : IJobParallelForTransform
 	public float speed;
 	public float deltaTime;
 	public float random;
-	public float[] targets;
-
-	private Vector3 target;
+	//public float[] targets;
+	/*[Unity.Collections.WriteOnly] */public NativeArray<Vector3> targets;
 
 	public void Execute(int index, TransformAccess transform)
 	{
-		if (Vector3.SqrMagnitude(transform.position - target) < targetTreshold * targetTreshold)
-			target = new Vector3(widthBounds.x + (random * (index + 1)) % (widthBounds.y - widthBounds.x), 1, heightBounds.x + (random * (index + 1)) % (heightBounds.y - heightBounds.x));
-		transform.position = Vector3.MoveTowards(transform.position, target, speed * deltaTime);
+		if (Vector3.SqrMagnitude(transform.position - targets[index]) < targetTreshold * targetTreshold)
+			targets[index] = new Vector3(widthBounds.x + (random * (index + 1)) % (widthBounds.y - widthBounds.x), 1, heightBounds.x + (random * (index + 1)) % (heightBounds.y - heightBounds.x));
+		transform.position = Vector3.MoveTowards(transform.position, targets[index], speed * deltaTime);
 	}
 }
