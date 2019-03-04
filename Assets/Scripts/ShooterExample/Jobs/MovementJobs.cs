@@ -15,8 +15,7 @@ public struct MovementJob : IJobParallelForTransform
 	public float speed;
 	public float deltaTime;
 	public float random;
-	//public float[] targets;
-	/*[Unity.Collections.WriteOnly] */public NativeArray<Vector3> targets;
+	public NativeArray<Vector3> targets;
 
 	public void Execute(int index, TransformAccess transform)
 	{
